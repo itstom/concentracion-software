@@ -1,0 +1,74 @@
+rom sqlalchemy import create_engine, Column, Integer, String, Date, ForeignKey
+from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
+
+class University(Base):
+    __tablename__ = 'university'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    location = Column(String)
+
+class Department(Base):
+    __tablename__ = 'department'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    university_id = Column(Integer, ForeignKey('university.id'))
+    university = relationship("University")
+
+class Student(Base):
+    __tablename__ = 'student'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    dob = Column(Date)
+    department_id = Column(Integer, ForeignKey('department.id'))
+    department = relationship("Department")
+
+class Course(Base):
+    __tablename__ = 'course'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    department_id = Column(Integer, ForeignKey('department.id'))
+    department = relationship("Department")
+
+class Enrollment(Base):
+    __tablename__ = 'enrollment'
+    id = Column(Integer, primary_key=True)
+    student_id = Column(Integer, ForeignKey('student.id'))
+    course_id = Column(Integer, ForeignKey('course.id'))
+    grade = Column(String)
+    student = relationship("Student")
+    course = relationship("Course")
+
+# Create an engine to connect to the database
+engine = create_engine('sqlite:///university.db')
+
+# Create the tables in the database
+Base.metadata.create_all(engine)
+
+# Create a session to interact with the database
+Session = sessionmaker(bind=engine)
+session = Session()
+
+# Add data to the tables
+university = University(name='XYZ University', location='City A')
+department = Department(name='Computer Science', university=university)
+student = Student(name='John Smith', dob='2000-01-01', department=department)
+course = Course(name='Computer Science 101', department=department)
+enrollment = Enrollment(student=student, course=course, grade='A')
+
+session.add(university)
+session.add(department)
+session.add(student)
+session.add(course)
+session.add(enrollment)
+
+# Commit the changes to the database
+session.commit()
+
+# Generate the INSERT statements
+for statement in session.connection().execution_options(compile_kwargs={'literal_binds': True}).\
+    execution_options(statement_compilation_options={"literal_binds": True}).\
+    execute("SELECT * FROM university").statement.\
+    split("\n"):
