@@ -11,6 +11,11 @@ let validateForm = () => {
         return false;
     }
     return true;
+    
+    const request = nex XMLHttpRequest()
+    request.open('POST', '/ProcessUserInfo/${JSON.stringify(username)}')
+    request.open('POST', '/ProcessUserInfo/${JSON.stringify(password)}')
+    request.send()
 
 }
 
